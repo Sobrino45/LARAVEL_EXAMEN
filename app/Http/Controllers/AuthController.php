@@ -22,9 +22,9 @@ class AuthController extends Controller
         $concesionarios = file_exists($path) ? file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
 
         // Comprobación de acceso leyendo el fichero
-        if (in_array($request->concesionario, $concesionarios)) {
+        if (in_array(trim($request->concesionario), array_map('trim', $concesionarios))) {
             session(['concesionario' => $request->concesionario]);
-            
+
             // Guardamos dato de última sesión en la cookie (válida por 120 minutos)
             $fecha = now()->format('d/m/Y H:i:s');
             Cookie::queue('ultima_sesion', $fecha, 120);

@@ -9,13 +9,13 @@ class Coche extends Model
 {
     use HasFactory;
 
-    // Tabla asociada (convención Laravel: plural del modelo)
-    protected $table = 'coches';
+    protected $table = 'coche';
 
-    // Atributos asignables en masa
+    public $timestamps = false;
+
     protected $fillable = [
         'modelo',
         'unidades',
-        'concesionario',
+        'concesionario'
     ];
 }

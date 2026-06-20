@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Coche;
 use Illuminate\Http\Request;
+use App\Models\Coche;
+use Illuminate\Support\Facades\Cookie;
 
 class CocheController extends Controller
 {
     public function index(Request $request)
     {
         $concesionario = session('concesionario');
-        
-        // Filtrar modelos del concesionario que ha iniciado sesión
-        $coches = Coche::where('concesionario', $concesionario)
-                       ->orderBy('modelo')
-                       ->get();
-                       
-        // Obtener la cookie
-        $ultimaSesion = $request->cookie('ultima_sesion');
 
-        return view('coches.index', compact('coches', 'concesionario', 'ultimaSesion'));
+        if ($request->has('filtrar') && $request->filtrar === 'concesionario') {
+            $coches = Coche::where('concesionario', $concesionario)->get();
+            $filtroActivo = true;
+        } else {
+            $coches = Coche::all();
+            $filtroActivo = false;
+        }
+
+        return view('coches.index', compact('coches', 'concesionario', 'filtroActivo'));
     }
 
     public function create()
@@ -31,64 +32,44 @@ class CocheController extends Controller
     {
         $request->validate([
             'modelo' => 'required|string|max:30',
-            'unidades' => 'required|integer|min:1',
+            'unidades' => 'required|integer',
         ]);
 
-        $concesionario = session('concesionario');
+        $coche = new Coche();
+        $coche->modelo = $request->modelo;
+        $coche->unidades = $request->unidades;
+        $coche->concesionario = session('concesionario');
+        $coche->save();
 
-        // Alta actualizando unidades si existe
-        $cocheExistente = Coche::where('modelo', $request->modelo)
-                               ->where('concesionario', $concesionario)
-                               ->first();
-
-        if ($cocheExistente) {
-            $cocheExistente->unidades += $request->unidades;
-            $cocheExistente->save();
-            return redirect()->route('coches.index')->with('success', 'El modelo ya existía. Unidades actualizadas correctamente.');
-        }
-
-        Coche::create([
-            'modelo' => $request->modelo,
-            'unidades' => $request->unidades,
-            'concesionario' => $concesionario,
-        ]);
-
-        return redirect()->route('coches.index')->with('success', 'Nuevo modelo registrado correctamente.');
+        return redirect()->route('coches.index');
     }
 
-    public function edit(Coche $coche)
+    public function edit($id)
     {
-        if ($coche->concesionario !== session('concesionario')) {
-            abort(403, 'Acceso no autorizado.');
-        }
+        $coche = Coche::findOrFail($id);
         return view('coches.edit', compact('coche'));
     }
 
-    public function update(Request $request, Coche $coche)
+    public function update(Request $request, $id)
     {
-        if ($coche->concesionario !== session('concesionario')) {
-            abort(403, 'Acceso no autorizado.');
-        }
-
         $request->validate([
             'modelo' => 'required|string|max:30',
-            'unidades' => 'required|integer|min:0',
+            'unidades' => 'required|integer',
         ]);
 
-        $coche->update([
-            'modelo' => $request->modelo,
-            'unidades' => $request->unidades
-        ]);
+        $coche = Coche::findOrFail($id);
+        $coche->modelo = $request->modelo;
+        $coche->unidades = $request->unidades;
+        $coche->save();
 
-        return redirect()->route('coches.index')->with('success', 'Coche actualizado correctamente.');
+        return redirect()->route('coches.index');
     }
 
-    public function destroy(Coche $coche)
+    public function destroy($id)
     {
-        if ($coche->concesionario === session('concesionario')) {
-            $coche->delete();
-        }
+        $coche = Coche::findOrFail($id);
+        $coche->delete();
 
-        return redirect()->route('coches.index')->with('success', 'Coche eliminado correctamente.');
+        return redirect()->route('coches.index');
     }
 }
