@@ -30,18 +30,6 @@
             <input type="number" name="unidades" id="unidades" value="{{ old('unidades', $coche->unidades) }}" required>
         </div>
         <br>
-        <div>
-            <label for="concesionario">Concesionario:</label>
-            <select name="concesionario" id="concesionario" required>
-                <option value="">Seleccione un concesionario</option>
-                @foreach($concesionarios as $concesionario)
-                    <option value="{{ $concesionario }}" {{ old('concesionario', $coche->concesionario) == $concesionario ? 'selected' : '' }}>
-                        {{ $concesionario }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <br>
         <button type="submit">Actualizar</button>
         <a href="{{ route('coches.index') }}">Cancelar</a>
     </form>

@@ -7,67 +7,87 @@ use Illuminate\Http\Request;
 
 class CocheController extends Controller
 {
-    /**
-     * Leer los concesionarios del archivo .txt
-     */
-    private function getConcesionarios()
+    public function index(Request $request)
     {
-        $path = storage_path('app/concesionarios.txt');
-        if (file_exists($path)) {
-            // Lee el archivo omitiendo líneas vacías y saltos de línea
-            return file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        }
-        return [];
-    }
+        $concesionario = session('concesionario');
+        
+        // Filtrar modelos del concesionario que ha iniciado sesión
+        $coches = Coche::where('concesionario', $concesionario)
+                       ->orderBy('modelo')
+                       ->get();
+                       
+        // Obtener la cookie
+        $ultimaSesion = $request->cookie('ultima_sesion');
 
-    public function index()
-    {
-        // Obtener todos los coches ordenados por concesionario y modelo
-        $coches = Coche::orderBy('concesionario')->orderBy('modelo')->get();
-        return view('coches.index', compact('coches'));
+        return view('coches.index', compact('coches', 'concesionario', 'ultimaSesion'));
     }
 
     public function create()
     {
-        $concesionarios = $this->getConcesionarios();
-        return view('coches.create', compact('concesionarios'));
+        return view('coches.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'modelo' => 'required|string|max:30',
-            'unidades' => 'required|integer|min:0',
-            'concesionario' => 'required|string|max:50',
+            'unidades' => 'required|integer|min:1',
         ]);
 
-        Coche::create($request->all());
+        $concesionario = session('concesionario');
 
-        return redirect()->route('coches.index')->with('success', 'Coche registrado correctamente.');
+        // Alta actualizando unidades si existe
+        $cocheExistente = Coche::where('modelo', $request->modelo)
+                               ->where('concesionario', $concesionario)
+                               ->first();
+
+        if ($cocheExistente) {
+            $cocheExistente->unidades += $request->unidades;
+            $cocheExistente->save();
+            return redirect()->route('coches.index')->with('success', 'El modelo ya existía. Unidades actualizadas correctamente.');
+        }
+
+        Coche::create([
+            'modelo' => $request->modelo,
+            'unidades' => $request->unidades,
+            'concesionario' => $concesionario,
+        ]);
+
+        return redirect()->route('coches.index')->with('success', 'Nuevo modelo registrado correctamente.');
     }
 
     public function edit(Coche $coche)
     {
-        $concesionarios = $this->getConcesionarios();
-        return view('coches.edit', compact('coche', 'concesionarios'));
+        if ($coche->concesionario !== session('concesionario')) {
+            abort(403, 'Acceso no autorizado.');
+        }
+        return view('coches.edit', compact('coche'));
     }
 
     public function update(Request $request, Coche $coche)
     {
+        if ($coche->concesionario !== session('concesionario')) {
+            abort(403, 'Acceso no autorizado.');
+        }
+
         $request->validate([
             'modelo' => 'required|string|max:30',
             'unidades' => 'required|integer|min:0',
-            'concesionario' => 'required|string|max:50',
         ]);
 
-        $coche->update($request->all());
+        $coche->update([
+            'modelo' => $request->modelo,
+            'unidades' => $request->unidades
+        ]);
 
         return redirect()->route('coches.index')->with('success', 'Coche actualizado correctamente.');
     }
 
     public function destroy(Coche $coche)
     {
-        $coche->delete();
+        if ($coche->concesionario === session('concesionario')) {
+            $coche->delete();
+        }
 
         return redirect()->route('coches.index')->with('success', 'Coche eliminado correctamente.');
     }

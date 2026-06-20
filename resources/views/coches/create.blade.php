@@ -5,7 +5,7 @@
     <title>Añadir Coche</title>
 </head>
 <body>
-    <h1>Añadir Nuevo Coche</h1>
+    <h1>Añadir Nuevo Coche ({{ session('concesionario') }})</h1>
 
     @if ($errors->any())
         <div style="color: red;">
@@ -27,18 +27,6 @@
         <div>
             <label for="unidades">Unidades:</label>
             <input type="number" name="unidades" id="unidades" value="{{ old('unidades') }}" required>
-        </div>
-        <br>
-        <div>
-            <label for="concesionario">Concesionario:</label>
-            <select name="concesionario" id="concesionario" required>
-                <option value="">Seleccione un concesionario</option>
-                @foreach($concesionarios as $concesionario)
-                    <option value="{{ $concesionario }}" {{ old('concesionario') == $concesionario ? 'selected' : '' }}>
-                        {{ $concesionario }}
-                    </option>
-                @endforeach
-            </select>
         </div>
         <br>
         <button type="submit">Guardar</button>

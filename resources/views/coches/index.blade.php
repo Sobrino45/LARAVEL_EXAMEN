@@ -5,7 +5,19 @@
     <title>Listado de Coches - Surmotor</title>
 </head>
 <body>
-    <h1>Listado de Coches</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Listado de Coches - {{ $concesionario }}</h1>
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit">Cerrar Sesión</button>
+        </form>
+    </div>
+    
+    @if($ultimaSesion)
+        <p style="color: blue;">Última sesión iniciada el: {{ $ultimaSesion }}</p>
+    @else
+        <p style="color: blue;">Esta es tu primera sesión hoy.</p>
+    @endif
     
     @if(session('success'))
         <p style="color: green;">{{ session('success') }}</p>
@@ -19,7 +31,6 @@
                 <th>ID</th>
                 <th>Modelo</th>
                 <th>Unidades</th>
-                <th>Concesionario</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -29,7 +40,6 @@
                     <td>{{ $coche->id }}</td>
                     <td>{{ $coche->modelo }}</td>
                     <td>{{ $coche->unidades }}</td>
-                    <td>{{ $coche->concesionario }}</td>
                     <td>
                         <a href="{{ route('coches.edit', $coche->id) }}">Editar</a> | 
                         <form action="{{ route('coches.destroy', $coche->id) }}" method="POST" style="display:inline;">
