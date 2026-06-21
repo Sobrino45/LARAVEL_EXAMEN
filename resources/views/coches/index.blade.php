@@ -7,9 +7,10 @@
 </head>
 <body>
     <div style="float: right;">
-        <a href="{{ url('/logout') }}">
-            <button type="button">Cerrar Sesión</button>
-        </a>
+        <form action="{{ url('/logout') }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit">Cerrar Sesión</button>
+        </form>
     </div>
 
     <h1>Listado de Coches - {{ $concesionario }}</h1>

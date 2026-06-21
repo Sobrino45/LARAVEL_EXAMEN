@@ -35,11 +35,25 @@ class CocheController extends Controller
             'unidades' => 'required|integer',
         ]);
 
-        $coche = new Coche();
-        $coche->modelo = $request->modelo;
-        $coche->unidades = $request->unidades;
-        $coche->concesionario = session('concesionario');
-        $coche->save();
+        $concesionario = session('concesionario');
+
+        // Buscar si el coche ya existe en el concesionario actual
+        $coche = Coche::where('modelo', $request->modelo)
+                      ->where('concesionario', $concesionario)
+                      ->first();
+
+        if ($coche) {
+            // Si existe, sumar las unidades nuevas a las que ya tenía
+            $coche->unidades += $request->unidades;
+            $coche->save();
+        } else {
+            // Si no existe, crear el registro nuevo
+            $nuevoCoche = new Coche();
+            $nuevoCoche->modelo = $request->modelo;
+            $nuevoCoche->unidades = $request->unidades;
+            $nuevoCoche->concesionario = $concesionario;
+            $nuevoCoche->save();
+        }
 
         return redirect()->route('coches.index');
     }
